@@ -3,7 +3,7 @@ Modulo tablero.py
 ------------------
 Define la forma del tablero: cuantas casillas tiene, donde estan las
 casillas especiales (premios y castigos) y como se traduce una posicion
-(un numero de 0 a 99) a una coordenada (fila, columna) para poder dibujar
+(un numero de 0 a 48) a una coordenada (fila, columna) para poder dibujar
 el tablero en zigzag, como en el Anexo I de la consigna.
 
 Todo lo de este archivo son datos y funciones puras: no hacen falta
@@ -41,8 +41,8 @@ DESCRIPCION_CASILLAS = {
 
 def calcular_coordenadas(posicion):
     """
-    Traduce un numero de casilla (0 a 99) a una coordenada (fila, columna)
-    en la grilla de 10x10, siguiendo un camino en zigzag (como una
+    Traduce un numero de casilla (0 a 48) a una coordenada (fila, columna)
+    en la grilla de 7x7, siguiendo un camino en zigzag (como una
     serpiente): la fila 0 va de izquierda a derecha, la fila 1 va de
     derecha a izquierda, la fila 2 de nuevo izquierda a derecha, etc.
 

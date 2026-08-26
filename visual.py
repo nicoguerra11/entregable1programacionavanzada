@@ -14,7 +14,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 import tablero
-from estado import NOMBRES_COLORES
+from estado import NOMBRES_COLORES, jugador_mas_avanzado
 
 # Atamos la consola explicitamente a la salida real de la terminal
 # (sys.stdout tal cual es en este momento). Esto es importante porque
@@ -89,11 +89,17 @@ def construir_tabla_jugadores(estado):
     tabla.add_column("Casilla", justify="center")
     tabla.add_column("Estado")
 
+    # Se usa para marcar en la tabla quien va primero en la partida.
+    lider = jugador_mas_avanzado(estado)
+
     for jugador in estado.jugadores:
         nombre_del_color = NOMBRES_COLORES[jugador.color]
         estado_turno = (
             f"pierde turno ({jugador.turnos_perdidos})" if jugador.turnos_perdidos > 0 else "juega"
         )
+        # Si nadie se movio todavia (todos en INICIO) no marcamos lider.
+        if jugador == lider and lider.posicion > tablero.INICIO:
+            estado_turno += " (lider)"
         tabla.add_row(
             jugador.nombre,
             f"[bold {jugador.color}]{nombre_del_color}[/bold {jugador.color}]",
