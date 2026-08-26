@@ -124,13 +124,31 @@ def resolver_competencia(par_jugador_a, par_jugador_b, tirar_dado_fn, intentos=0
     return par_jugador_b, par_jugador_a
 
 
+def retroceder_hasta_casilla_libre(jugador, indice_jugador, estado):
+    """
+    Retrocede al jugador de a una casilla, repitiendo mientras la
+    casilla a la que llega este ocupada por otro jugador. La casilla
+    INICIO se considera siempre libre (es neutral), asi que en el peor
+    de los casos la recursion termina ahi.
+
+    TECNICA: recursion.
+    """
+    if jugador.posicion == tablero.INICIO:
+        return jugador
+
+    if not jugadores_en_casilla(estado, jugador.posicion, indice_excluido=indice_jugador):
+        return jugador
+
+    return retroceder_hasta_casilla_libre(mover_jugador(jugador, -1), indice_jugador, estado)
+
+
 def resolver_colision_si_corresponde(estado, indice_jugador, tirar_dado_fn, al_detectar_colision=None):
     """
     Si el jugador que se acaba de mover cayo en la misma casilla que
     otro jugador, resuelve la competencia y hace retroceder al que
-    pierde (2 casillas, y una mas si esa nueva casilla tambien esta
-    ocupada). La casilla INICIO es neutral: ahi no hay competencia,
-    porque todos los jugadores arrancan parados en ella.
+    pierde 2 casillas, siguiendo un poco mas si hiciera falta hasta
+    caer en una casilla libre (nunca quedan dos jugadores parados
+    juntos, salvo en INICIO, que es neutral).
 
     al_detectar_colision es un callback opcional (por ejemplo, para
     dibujar el tablero) que se llama justo cuando se detectan los dos
@@ -158,9 +176,7 @@ def resolver_colision_si_corresponde(estado, indice_jugador, tirar_dado_fn, al_d
     )
 
     jugador_perdedor = mover_jugador(jugador_perdedor, -2)
-    # Si el que pierde vuelve a caer en una casilla ocupada, retrocede una mas.
-    if jugadores_en_casilla(estado, jugador_perdedor.posicion, indice_excluido=indice_perdedor):
-        jugador_perdedor = mover_jugador(jugador_perdedor, -1)
+    jugador_perdedor = retroceder_hasta_casilla_libre(jugador_perdedor, indice_perdedor, estado)
 
     print(
         f"[LOG] En la casilla {jugador.posicion} gana {jugador_ganador.nombre}, "
