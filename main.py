@@ -14,6 +14,7 @@ print/rich (para mostrar todo en pantalla).
 
 import io
 import random
+import sys
 import time
 from contextlib import redirect_stdout
 
@@ -71,20 +72,32 @@ def elegir_color_objetivo_simulacion(estado, indice_jugador):
 
 
 def elegir_color_objetivo_interactivo(estado, indice_jugador):
-    """En modo interactivo, se le pregunta al jugador que color castigar."""
+    """
+    En modo interactivo, se le pregunta al jugador que color castigar.
+
+    Esta funcion se llama desde adentro del bloque redirect_stdout de
+    jugar_turno_con_log (ver mas abajo), asi que un print() comun
+    quedaria atrapado en el buffer y no se veria en pantalla hasta que
+    termine el turno. Por eso el menu y el prompt se escriben directo a
+    sys.__stdout__ (la terminal real), igual que hace visual.py con su
+    Console. input() se llama sin texto de prompt porque, si se le
+    pasa un prompt, Python intenta escribirlo usando el sys.stdout
+    actual (el buffer) en vez de la terminal.
+    """
     jugador_actual = estado.jugadores[indice_jugador]
     otros = [(i, jugador) for i, jugador in enumerate(estado.jugadores) if i != indice_jugador]
 
-    print(f"{jugador_actual.nombre} cayo en P1: elegi a que color le haces perder un turno.")
+    print(f"{jugador_actual.nombre} cayo en P1: elegi a que color le haces perder un turno.", file=sys.__stdout__)
     for numero, (_, jugador) in enumerate(otros, start=1):
-        print(f"  {numero}) {estado_modulo.NOMBRES_COLORES[jugador.color]} ({jugador.nombre})")
+        print(f"  {numero}) {estado_modulo.NOMBRES_COLORES[jugador.color]} ({jugador.nombre})", file=sys.__stdout__)
 
     while True:
-        texto = input("Opcion: ").strip()
+        print("Opcion: ", end="", file=sys.__stdout__)
+        texto = input().strip()
         if texto.isdigit() and 1 <= int(texto) <= len(otros):
             _, jugador_elegido = otros[int(texto) - 1]
             return jugador_elegido.color
-        print("Opcion invalida.")
+        print("Opcion invalida.", file=sys.__stdout__)
 
 
 # --- Bucle principal de juego ---
