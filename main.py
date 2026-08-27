@@ -1,17 +1,3 @@
-"""
-Modulo main.py
----------------
-Punto de entrada del juego. Pide el modo de juego (simulacion o
-interactivo), arma los jugadores, y corre el bucle principal de turnos
-hasta que alguien gane.
-
-Este archivo es la capa impura que conecta todo: el nucleo puro de
-estado.py, la logica de turnos de juego.py, y el dibujado en pantalla
-de visual.py. Usa random (para elegir colores al azar en el castigo de
-P1 en modo simulacion), input (para leer lo que escribe el usuario) y
-print/rich (para mostrar todo en pantalla).
-"""
-
 import io
 import random
 import sys
@@ -24,9 +10,6 @@ import visual
 
 PAUSA_SIMULACION_SEGUNDOS = 1.5
 PAUSA_COLISION_SEGUNDOS = 1.2
-
-
-# --- Entrada de datos (todo esto es impuro: usa input) ---
 
 
 def pedir_modo_juego():
@@ -56,15 +39,10 @@ def pedir_nombres_jugadores(cantidad):
 
 
 def nombres_automaticos(cantidad):
-    # TECNICA: comprension de listas.
     return [f"Jugador {numero}" for numero in range(1, cantidad + 1)]
 
 
-# --- Como se elige el color castigado en la casilla P1 ---
-
-
 def elegir_color_objetivo_simulacion(estado, indice_jugador):
-    """En modo simulacion, P1 elige al azar el color de otro jugador."""
     colores_disponibles = [
         jugador.color for i, jugador in enumerate(estado.jugadores) if i != indice_jugador
     ]
@@ -72,21 +50,9 @@ def elegir_color_objetivo_simulacion(estado, indice_jugador):
 
 
 def elegir_color_objetivo_interactivo(estado, indice_jugador):
-    """
-    En modo interactivo, se le pregunta al jugador que color castigar.
-
-    Esta funcion se llama desde adentro del bloque redirect_stdout de
-    jugar_turno_con_log (ver mas abajo), asi que un print() comun
-    quedaria atrapado en el buffer y no se veria en pantalla hasta que
-    termine el turno. Por eso el menu y el prompt se escriben directo a
-    sys.__stdout__ (la terminal real), igual que hace visual.py con su
-    Console. input() se llama sin texto de prompt porque, si se le
-    pasa un prompt, Python intenta escribirlo usando el sys.stdout
-    actual (el buffer) en vez de la terminal.
-    """
     jugador_actual = estado.jugadores[indice_jugador]
     otros = [(i, jugador) for i, jugador in enumerate(estado.jugadores) if i != indice_jugador]
-
+    #esto va a sys.__stdout__ y no a print normal porque corre dentro del redirect_stdout de jugar_turno_con_log
     print(f"{jugador_actual.nombre} cayo en P1: elegi a que color le haces perder un turno.", file=sys.__stdout__)
     for numero, (_, jugador) in enumerate(otros, start=1):
         print(f"  {numero}) {estado_modulo.NOMBRES_COLORES[jugador.color]} ({jugador.nombre})", file=sys.__stdout__)
@@ -100,26 +66,13 @@ def elegir_color_objetivo_interactivo(estado, indice_jugador):
         print("Opcion invalida.", file=sys.__stdout__)
 
 
-# --- Bucle principal de juego ---
-
-
 def mostrar_colision_momentanea(estado):
-    """
-    Se le pasa a juego.jugar_turno como callback: cuando dos jugadores
-    quedan en la misma casilla, se muestra el tablero con los dos ahi
-    antes de resolver quien se la queda.
-    """
     visual.consola.clear()
     visual.mostrar_estado(estado, texto_log="Dos jugadores en la misma casilla: van a competir por ella...")
     time.sleep(PAUSA_COLISION_SEGUNDOS)
 
 
 def jugar_turno_con_log(estado, indice_jugador, elegir_color_objetivo_fn):
-    """
-    Ejecuta un turno completo, capturando en un texto todo lo que
-    juego.py va imprimiendo con print() (los mensajes [LOG]) para
-    poder mostrarlo despues junto con el tablero actualizado.
-    """
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         nuevo_estado = juego.jugar_turno(
@@ -159,7 +112,7 @@ def jugar_partida(nombres, elegir_color_objetivo_fn, antes_de_tirar_fn, despues_
 
 
 def antes_de_tirar_simulacion(jugador_del_turno):
-    pass  # en simulacion no hace falta ningun input, el juego solo avanza
+    pass  #en simulacion no se precisa ningun input
 
 
 def antes_de_tirar_interactivo(jugador_del_turno):
@@ -171,7 +124,7 @@ def despues_de_mostrar_simulacion():
 
 
 def despues_de_mostrar_interactivo():
-    pass  # el siguiente antes_de_tirar_fn ya va a pedir el ENTER del proximo jugador
+    pass  #el siguiente antes_de_tirar_fn ya va a pedir el enter del proximo jugador
 
 
 def main():
