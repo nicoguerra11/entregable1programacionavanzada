@@ -74,10 +74,6 @@ def verificar_ganador(estado):
     return jugadores_en_la_meta[0].nombre if jugadores_en_la_meta else None
 
 
-def obtener_posiciones(estado):
-    return list(map(lambda jugador: jugador.posicion, estado.jugadores))
-
-
 def jugador_mas_avanzado(estado):
     return reduce(
         lambda mejor, jugador: jugador if jugador.posicion > mejor.posicion else mejor,
