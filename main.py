@@ -66,26 +66,32 @@ def elegir_color_objetivo_interactivo(estado, indice_jugador):
         print("Opcion invalida.", file=sys.__stdout__)
 
 
+def tirar_dado_interactivo():
+    print("Presiona ENTER para tirar el dado... ", end="", file=sys.__stdout__)
+    input()
+    return juego.tirar_dado()
+
+
 def mostrar_colision_momentanea(estado):
     visual.consola.clear()
     visual.mostrar_estado(estado, texto_log="Dos jugadores en la misma casilla: van a competir por ella...")
     time.sleep(PAUSA_COLISION_SEGUNDOS)
 
 
-def jugar_turno_con_log(estado, indice_jugador, elegir_color_objetivo_fn):
+def jugar_turno_con_log(estado, indice_jugador, tirar_dado_fn, elegir_color_objetivo_fn):
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         nuevo_estado = juego.jugar_turno(
             estado,
             indice_jugador,
-            juego.tirar_dado,
+            tirar_dado_fn,
             elegir_color_objetivo_fn,
             mostrar_colision_momentanea,
         )
     return nuevo_estado, buffer.getvalue()
 
 
-def jugar_partida(nombres, elegir_color_objetivo_fn, antes_de_tirar_fn, despues_de_mostrar_fn):
+def jugar_partida(nombres, tirar_dado_fn, elegir_color_objetivo_fn, antes_de_tirar_fn, despues_de_mostrar_fn):
     estado = estado_modulo.crear_estado_inicial(nombres)
     turnos = estado_modulo.generador_turnos(len(estado.jugadores))
 
@@ -99,7 +105,7 @@ def jugar_partida(nombres, elegir_color_objetivo_fn, antes_de_tirar_fn, despues_
         jugador_del_turno = estado.jugadores[indice_jugador]
 
         antes_de_tirar_fn(jugador_del_turno)
-        estado, texto_log = jugar_turno_con_log(estado, indice_jugador, elegir_color_objetivo_fn)
+        estado, texto_log = jugar_turno_con_log(estado, indice_jugador, tirar_dado_fn, elegir_color_objetivo_fn)
 
         visual.consola.clear()
         visual.mostrar_estado(estado, texto_log)
@@ -116,7 +122,7 @@ def antes_de_tirar_simulacion(jugador_del_turno):
 
 
 def antes_de_tirar_interactivo(jugador_del_turno):
-    input(f"Turno de {jugador_del_turno.nombre} - presiona ENTER para tirar el dado...")
+    print(f"Turno de {jugador_del_turno.nombre}")
 
 
 def despues_de_mostrar_simulacion():
@@ -124,7 +130,7 @@ def despues_de_mostrar_simulacion():
 
 
 def despues_de_mostrar_interactivo():
-    pass  #el siguiente antes_de_tirar_fn ya va a pedir el enter del proximo jugador
+    pass  #el enter lo pide tirar_dado_interactivo en cada tirada
 
 
 def main():
@@ -135,12 +141,14 @@ def main():
     if modo == "simulacion":
         nombres = nombres_automaticos(cantidad)
         jugar_partida(
-            nombres, elegir_color_objetivo_simulacion, antes_de_tirar_simulacion, despues_de_mostrar_simulacion
+            nombres, juego.tirar_dado, elegir_color_objetivo_simulacion,
+            antes_de_tirar_simulacion, despues_de_mostrar_simulacion
         )
     else:
         nombres = pedir_nombres_jugadores(cantidad)
         jugar_partida(
-            nombres, elegir_color_objetivo_interactivo, antes_de_tirar_interactivo, despues_de_mostrar_interactivo
+            nombres, tirar_dado_interactivo, elegir_color_objetivo_interactivo,
+            antes_de_tirar_interactivo, despues_de_mostrar_interactivo
         )
 
 
