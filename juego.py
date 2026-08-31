@@ -155,4 +155,9 @@ def jugar_turno(estado, indice_jugador, tirar_dado_fn, elegir_color_objetivo_fn,
     if jugar_de_nuevo:
         return jugar_turno(estado, indice_jugador, tirar_dado_fn, elegir_color_objetivo_fn, al_detectar_colision)
 
+    jugador_actual = estado.jugadores[indice_jugador]
+    if jugador_actual.posicion != posicion_tras_mover:
+        jugador_actual = retroceder_hasta_casilla_libre(jugador_actual, indice_jugador, estado)
+        estado = reemplazar_jugador(estado, indice_jugador, jugador_actual)
+
     return estado
