@@ -10,6 +10,7 @@ import visual
 
 PAUSA_SIMULACION_SEGUNDOS = 1.5
 PAUSA_COLISION_SEGUNDOS = 1.2
+PAUSA_TURNO_PERDIDO_SEGUNDOS = 1.5
 
 
 def pedir_modo_juego():
@@ -49,16 +50,39 @@ def elegir_color_objetivo_simulacion(estado, indice_jugador):
     return random.choice(colores_disponibles)
 
 
+_log_ya_mostrado = 0
+_hubo_tirada = False
+
+
+def reiniciar_seguimiento_del_turno():
+    global _log_ya_mostrado, _hubo_tirada
+    _log_ya_mostrado = 0
+    _hubo_tirada = False
+
+
+def mostrar_log_en_vivo():
+    global _log_ya_mostrado
+    if not isinstance(sys.stdout, io.StringIO):
+        return
+
+    texto = sys.stdout.getvalue()
+    pendiente = texto[_log_ya_mostrado:].strip()
+    _log_ya_mostrado = len(texto)
+
+    if pendiente:
+        print(pendiente, flush=True, file=sys.__stdout__)
+
+
 def elegir_color_objetivo_interactivo(estado, indice_jugador):
     jugador_actual = estado.jugadores[indice_jugador]
     otros = [(i, jugador) for i, jugador in enumerate(estado.jugadores) if i != indice_jugador]
-    #esto va a sys.__stdout__ y no a print normal porque corre dentro del redirect_stdout de jugar_turno_con_log
-    print(f"{jugador_actual.nombre} cayo en P1: elegi a que color le haces perder un turno.", file=sys.__stdout__)
+    mostrar_log_en_vivo()
+    print(f"{jugador_actual.nombre}, elegi a que color le haces perder un turno:", file=sys.__stdout__)
     for numero, (_, jugador) in enumerate(otros, start=1):
         print(f"  {numero}) {estado_modulo.NOMBRES_COLORES[jugador.color]} ({jugador.nombre})", file=sys.__stdout__)
 
     while True:
-        print("Opcion: ", end="", file=sys.__stdout__)
+        print("Opcion: ", end="", flush=True, file=sys.__stdout__)
         texto = input().strip()
         if texto.isdigit() and 1 <= int(texto) <= len(otros):
             _, jugador_elegido = otros[int(texto) - 1]
@@ -67,7 +91,10 @@ def elegir_color_objetivo_interactivo(estado, indice_jugador):
 
 
 def tirar_dado_interactivo():
-    print("Presiona ENTER para tirar el dado... ", end="", file=sys.__stdout__)
+    global _hubo_tirada
+    _hubo_tirada = True
+    mostrar_log_en_vivo()
+    print("Presiona ENTER para tirar el dado... ", end="", flush=True, file=sys.__stdout__)
     input()
     return juego.tirar_dado()
 
@@ -80,6 +107,7 @@ def mostrar_colision_momentanea(estado):
 
 def jugar_turno_con_log(estado, indice_jugador, tirar_dado_fn, elegir_color_objetivo_fn):
     buffer = io.StringIO()
+    reiniciar_seguimiento_del_turno()
     with redirect_stdout(buffer):
         nuevo_estado = juego.jugar_turno(
             estado,
@@ -118,7 +146,7 @@ def jugar_partida(nombres, tirar_dado_fn, elegir_color_objetivo_fn, antes_de_tir
 
 
 def antes_de_tirar_simulacion(jugador_del_turno):
-    pass  #en simulacion no se precisa ningun input
+    pass
 
 
 def antes_de_tirar_interactivo(jugador_del_turno):
@@ -130,7 +158,8 @@ def despues_de_mostrar_simulacion():
 
 
 def despues_de_mostrar_interactivo():
-    pass  #el enter lo pide tirar_dado_interactivo en cada tirada
+    if not _hubo_tirada:
+        time.sleep(PAUSA_TURNO_PERDIDO_SEGUNDOS)
 
 
 def main():

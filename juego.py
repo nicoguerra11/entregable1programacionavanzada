@@ -44,7 +44,9 @@ def resolver_competencia(par_jugador_a, par_jugador_b, tirar_dado_fn, intentos=0
     _, jugador_a = par_jugador_a
     _, jugador_b = par_jugador_b
 
+    print(f"[LOG] Compite {jugador_a.nombre}: le toca tirar")
     valor_a = tirar_dado_fn()
+    print(f"[LOG] Compite {jugador_b.nombre}: le toca tirar")
     valor_b = tirar_dado_fn()
     print(f"[LOG] Competencia: {jugador_a.nombre} saca {valor_a}, {jugador_b.nombre} saca {valor_b}")
 
@@ -93,9 +95,14 @@ def resolver_colision_si_corresponde(estado, indice_jugador, tirar_dado_fn, al_d
     jugador_perdedor = mover_jugador(jugador_perdedor, -2)
     jugador_perdedor = retroceder_hasta_casilla_libre(jugador_perdedor, indice_perdedor, estado)
 
+    destino = (
+        "INICIO"
+        if jugador_perdedor.posicion == tablero.INICIO
+        else f"la casilla {jugador_perdedor.posicion}"
+    )
     print(
         f"[LOG] En la casilla {jugador.posicion} gana {jugador_ganador.nombre}, "
-        f"retrocede {jugador_perdedor.nombre} hasta la casilla {jugador_perdedor.posicion}"
+        f"retrocede {jugador_perdedor.nombre} hasta {destino}"
     )
 
     return reemplazar_jugador(estado, indice_perdedor, jugador_perdedor)
@@ -119,13 +126,17 @@ def aplicar_efecto_casilla(estado, indice_jugador, elegir_color_objetivo_fn):
         return estado, True
 
     if codigo_casilla == "P3":
-        return reemplazar_jugador(estado, indice_jugador, aplicar_p3(jugador)), False
+        jugador_movido = aplicar_p3(jugador)
+        print(f"[LOG] {jugador.nombre} avanza hasta la casilla {jugador_movido.posicion}")
+        return reemplazar_jugador(estado, indice_jugador, jugador_movido), False
 
     if codigo_casilla == "C1":
         return reemplazar_jugador(estado, indice_jugador, aplicar_c1(jugador)), False
 
     if codigo_casilla == "C2":
-        return reemplazar_jugador(estado, indice_jugador, aplicar_c2(jugador)), False
+        jugador_movido = aplicar_c2(jugador)
+        print(f"[LOG] {jugador.nombre} retrocede hasta la casilla {jugador_movido.posicion}")
+        return reemplazar_jugador(estado, indice_jugador, jugador_movido), False
 
     return estado, False
 
@@ -157,7 +168,12 @@ def jugar_turno(estado, indice_jugador, tirar_dado_fn, elegir_color_objetivo_fn,
 
     jugador_actual = estado.jugadores[indice_jugador]
     if jugador_actual.posicion != posicion_tras_mover:
-        jugador_actual = retroceder_hasta_casilla_libre(jugador_actual, indice_jugador, estado)
-        estado = reemplazar_jugador(estado, indice_jugador, jugador_actual)
+        jugador_reacomodado = retroceder_hasta_casilla_libre(jugador_actual, indice_jugador, estado)
+        if jugador_reacomodado.posicion != jugador_actual.posicion:
+            print(
+                f"[LOG] La casilla {jugador_actual.posicion} estaba ocupada, "
+                f"{jugador_actual.nombre} retrocede hasta la casilla {jugador_reacomodado.posicion}"
+            )
+        estado = reemplazar_jugador(estado, indice_jugador, jugador_reacomodado)
 
     return estado
